@@ -49,6 +49,9 @@ def pushed(b):
     if mode == 0:
       # it is allowed!
       print("playing video", b)
+
+      # we turn all LEDs off while a video is playing
+      # if you want the LEDs to show which video is playing, write something else for the two lines below
       for led in leds[1:]:
         led.off()
       playvid(b)
