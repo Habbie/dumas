@@ -21,8 +21,9 @@ import functools
 # tijdens afspelen van een taalvideo zijn de LEDs uit
 
 # mode is een index in de verschillende arrays. 0 is de pauzestand. 1 en verder zijn talen.
+# -1 is de opstartmode zodat de nep-push van 0 tijdens het starten de lampjes goedzet
 
-mode = 0
+mode = -1
 
 button_ids = [ 22, 23, 27 ]
 led_ids    = [ None, 24, 17 ]
@@ -60,9 +61,6 @@ def pushed(b):
     else:
       print("user tried to switch videos while one was playing, denying")
       return
-   
-
-    
 
 def video1():
   leds[0].on()
@@ -81,5 +79,6 @@ leds = [None] + [ LED(i) for i in led_ids[1:] ]
 for i in range(len(buttons)):
 	buttons[i].when_pressed = functools.partial(pushed, i)
 
+pushed(0)
 print("ready")
 pause()
