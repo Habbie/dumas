@@ -24,8 +24,8 @@ import functools
 
 mode = 0
 
-button_ids = [ 23, 27 ]
-led_ids    = [ 24, 17 ]
+button_ids = [ 22, 23, 27 ]
+led_ids    = [ None, 24, 17 ]
 
 def playvid(v):
   print("starting vid", v)
@@ -76,7 +76,7 @@ def video2():
 
 
 buttons = [ Button(i) for i in button_ids ]
-leds = [ LED(i) for i in led_ids ]
+leds = [None] + [ LED(i) for i in led_ids[1:] ]
 
 for i in range(len(buttons)):
 	buttons[i].when_pressed = functools.partial(pushed, i)
