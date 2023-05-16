@@ -6,9 +6,11 @@ led    switch
 17     27
 """
 
-from gpiozero import Button, LED
-from signal import pause
+#from gpiozero import Button, LED
+#from signal import pause
+import gpiod
 import functools
+import sys
 
 # de eerste knop (knop 0) is de resetknop
 # na de resetknop tonen/spelen we het pauzescherm
@@ -73,12 +75,39 @@ def video2():
   print("we spelen nu video 2")
 
 
-buttons = [ Button(i) for i in button_ids ]
-leds = [None] + [ LED(i) for i in led_ids[1:] ]
+class LED:
+  def __init__(self, chip, offset):
+    self.led = chip.get_lines([offset])
+    self.led.request(consumer='dumas', type=gpiod.LINE_REQ_DIR_OUT)
 
-for i in range(len(buttons)):
-	buttons[i].when_pressed = functools.partial(pushed, i)
+  def set(self, val):
+    self.led.set_values([val])
+
+  def on(self):
+    self.set(1)
+
+  def off(self):
+    self.set(0)
+
+leds = []
 
 pushed(0)
 print("ready")
-pause()
+
+with gpiod.Chip('pinctrl-bcm2711') as chip:
+  buttons = chip.get_lines(button_ids)
+  buttons.request(consumer='dumas',
+                  type=gpiod.LINE_REQ_EV_RISING_EDGE,
+                  flags=gpiod.LINE_REQ_FLAG_BIAS_PULL_UP)
+
+  leds = [None] + [ LED(chip, i) for i in led_ids[1:] ]
+
+  try:
+    while True:
+      button_events = buttons.event_wait(sec=1)
+      if button_events:
+        for event in button_events:
+          ev = event.event_read()
+          pushed(button_ids.index(ev.source.offset()))
+  except KeyboardInterrupt:
+    sys.exit(1)
