@@ -106,17 +106,6 @@ def pushed(b):
       print("user tried to switch videos while one was playing, denying")
       return
 
-def video1():
-  leds[0].on()
-  leds[1].off()
-  print("we spelen nu video 1")
-
-def video2():
-  leds[1].on()
-  leds[0].off()
-  print("we spelen nu video 2")
-
-
 class LED:
   def __init__(self, chip, offset):
     self.led = chip.get_lines([offset])
