@@ -12,11 +12,15 @@ led_ids    = [ None, 24, 17 ]
 
 GPIOCHIP = 'pinctrl-bcm2711'
 
+MPVSOCK = '/tmp/mpv.sock'
+
 #from gpiozero import Button, LED
 #from signal import pause
 import gpiod
 import functools
 import sys
+import socket
+import json
 
 # de eerste knop (knop 0) is de resetknop
 # na de resetknop tonen/spelen we het pauzescherm
@@ -33,9 +37,23 @@ import sys
 
 mode = -1
 
+class MPV:
+  def __init__(self, path):
+    self.path = path
+    self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    self.sock.connect(path)
+
+  def send(self, msg):
+    d = bytes(json.dumps(msg), 'ascii')
+    print("sending", d)
+    self.sock.sendall(d+b'\n')
+
+mpv = MPV(MPVSOCK)
 
 def playvid(v):
   print("starting vid", v)
+  mpv.send(dict(command=['loadfile', str(v)]))
+  mpv.send(dict(command=['set_property', 'pause', False]))
 
 def pushed(b):
   global mode
