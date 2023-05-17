@@ -4,7 +4,13 @@
 led    switch
 24     23
 17     27
+--     22
 """
+
+button_ids = [ 22, 23, 27 ]
+led_ids    = [ None, 24, 17 ]
+
+GPIOCHIP = 'pinctrl-bcm2711'
 
 #from gpiozero import Button, LED
 #from signal import pause
@@ -27,8 +33,6 @@ import sys
 
 mode = -1
 
-button_ids = [ 22, 23, 27 ]
-led_ids    = [ None, 24, 17 ]
 
 def playvid(v):
   print("starting vid", v)
@@ -94,7 +98,7 @@ leds = []
 pushed(0)
 print("ready")
 
-with gpiod.Chip('pinctrl-bcm2711') as chip:
+with gpiod.Chip(GPIOCHIP) as chip:
   buttons = chip.get_lines(button_ids)
   buttons.request(consumer='dumas',
                   type=gpiod.LINE_REQ_EV_RISING_EDGE,
