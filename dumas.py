@@ -21,6 +21,9 @@ import functools
 import sys
 import socket
 import json
+import threading
+import queue
+import ijson
 
 # de eerste knop (knop 0) is de resetknop
 # na de resetknop tonen/spelen we het pauzescherm
@@ -42,11 +45,28 @@ class MPV:
     self.path = path
     self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     self.sock.connect(path)
+    self.listener = threading.Thread(target=self.listener)
+    self.listener.daemon = True
+    self.eventqueue = queue.Queue()
+    self.listener.start()
 
   def send(self, msg):
     d = bytes(json.dumps(msg), 'ascii')
     print("sending", d)
     self.sock.sendall(d+b'\n')
+
+  def listener(self):
+    f = self.sock.makefile()
+
+    for line in f:
+      print("mpv sent", line)
+      self.eventqueue.put(json.loads(line))
+
+  def maybe_get_event(self):
+    try:
+      return self.eventqueue.get(block=False)
+    except queue.Empty:
+      return None
 
 mpv = MPV(MPVSOCK)
 
@@ -127,9 +147,23 @@ with gpiod.Chip(GPIOCHIP) as chip:
   try:
     while True:
       button_events = buttons.event_wait(sec=1)
+      print('.')
       if button_events:
         for event in button_events:
           ev = event.event_read()
           pushed(button_ids.index(ev.source.offset()))
+      while True:
+        event = mpv.maybe_get_event()
+        if event:
+          print("from queue:", event)
+          if event.get("request_id") == 42:
+            # a pause report
+            if event.get("data"):
+              # we are paused, so we should be in state 0
+              pushed(0)
+        else:
+          break
+      mpv.send(dict(command=['get_property', 'pause'], request_id=42))
+
   except KeyboardInterrupt:
     sys.exit(1)
